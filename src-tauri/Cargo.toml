@@ -1,0 +1,26 @@
+[package]
+name = "friday-core"
+version = "4.2.0"
+description = "F.R.I.D.A.Y. Neural Command Interface"
+authors = ["F.R.I.D.A.Y. Systems"]
+edition = "2021"
+
+[lib]
+name = "friday_core_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

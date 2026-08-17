@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuração de segurança de rede para permitir tráfego HTTP/WS
+  não criptografado para o Hub Central na rede local (192.168.x.x / 10.x.x.x).
+  Em produção com Tailscale/VPN, o tráfego é criptografado na camada de rede.
+-->
+<network-security-config>
+    <!-- Permite cleartext para redes privadas locais -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <domain includeSubdomains="true">10.0.0.0</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Emulador Android aponta para host via 10.0.2.2 -->
+    </domain-config>
+    <!-- Resto da internet: apenas HTTPS -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

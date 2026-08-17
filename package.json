@@ -1,0 +1,16 @@
+{
+  "name": "friday-core",
+  "version": "4.2.0",
+  "description": "F.R.I.D.A.Y. Neural Command Interface — Desktop App",
+  "scripts": {
+    "dev":   "npx @tauri-apps/cli dev",
+    "build": "npx @tauri-apps/cli build",
+    "tauri": "npx @tauri-apps/cli"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  }
+}

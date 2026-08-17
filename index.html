@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="F.R.I.D.A.Y. — Female Replacement Intelligent Digital Assistant Youth. Sistema de Inteligência Artificial de nível cinematográfico." />
+  <title>F.R.I.D.A.Y. // CORE v4.2 — Neural Command Interface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cyan:        #00f0ff;
+      --cyan-dim:    #00b8cc;
+      --cyan-ghost:  rgba(0,240,255,0.08);
+      --orange:      #ff6b00;
+      --orange-dim:  rgba(255,107,0,0.6);
+      --emerald:     #00ff88;
+      --emerald-dim: rgba(0,255,136,0.6);
+      --red-alert:   #ff2244;
+      --bg-void:     #030609;
+      --bg-deep:     #050811;
+      --bg-panel:    rgba(5,12,25,0.72);
+      --border-glow: rgba(0,240,255,0.25);
+      --text-primary: #e0f8ff;
+      --text-muted:   rgba(180,230,255,0.55);
+      --glow-cyan:    0 0 20px rgba(0,240,255,0.45), 0 0 60px rgba(0,240,255,0.15);
+      --glow-orange:  0 0 20px rgba(255,107,0,0.45), 0 0 60px rgba(255,107,0,0.15);
+      --glow-emerald: 0 0 20px rgba(0,255,136,0.45), 0 0 60px rgba(0,255,136,0.15);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    #neural-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .scanlines {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    }
+    .vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+    }
+    .corner { position: fixed; width: 40px; height: 40px; z-index: 10; pointer-events: none; }
+    .corner::before, .corner::after { content: ''; position: absolute; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    .corner::before { width: 100%; height: 2px; top: 0; }
+    .corner::after  { width: 2px; height: 100%; top: 0; }
+    .corner.tl { top: 16px; left: 16px; }
+    .corner.tr { top: 16px; right: 16px; transform: scaleX(-1); }
+    .corner.bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
+    .corner.br { bottom: 16px; right: 16px; transform: scale(-1); }
+    #app {
+      position: relative; z-index: 2;
+      width: 100vw; height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 260px 1fr 260px;
+      grid-template-areas: "header header header" "left center right" "footer footer footer";
+      gap: 12px;
+      padding: 24px 20px 20px;
+    }
+    .panel {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .panel::before {
+      content: ''; position: absolute; inset: 0; border-radius: 8px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    #header {
+      grid-area: header;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border-glow);
+      background: rgba(3,6,9,0.85);
+      backdrop-filter: blur(20px);
+      border-radius: 8px;
+    }
+    .logo-group { display: flex; align-items: center; gap: 12px; }
+    .logo-pulse {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--cyan); box-shadow: var(--glow-cyan);
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0,240,255,0.6), var(--glow-cyan); }
+      50%       { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 0 6px rgba(0,240,255,0), var(--glow-cyan); }
+    }
+    .logo-title { font-family: 'Orbitron', monospace; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.15em; color: #fff; text-shadow: var(--glow-cyan); }
+    .logo-title span { color: var(--cyan); }
+    .logo-sub { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.08em; margin-top: 2px; }
+    .header-metrics { display: flex; align-items: center; gap: 24px; }
+    .metric { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .metric-label { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--text-muted); letter-spacing: 0.12em; }
+    .metric-value { font-family: 'Orbitron', monospace; font-size: 0.78rem; font-weight: 700; color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+    .metric-value.warn { color: var(--orange); text-shadow: 0 0 10px var(--orange); }
+    .metric-value.ok   { color: var(--emerald); text-shadow: 0 0 10px var(--emerald); }
+    .status-badge {
+      font-family: 'Orbitron', monospace; font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.12em; color: var(--emerald);
+      border: 1px solid rgba(0,255,136,0.35); padding: 4px 12px; border-radius: 4px;
+      background: rgba(0,255,136,0.07); box-shadow: 0 0 12px rgba(0,255,136,0.2);
+      animation: blink-status 3s ease-in-out infinite;
+    }
+    @keyframes blink-status { 0%, 90%, 100% { opacity: 1; } 95% { opacity: 0.5; } }
+    .header-time { font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.06em; }
+    #left-panel { grid-area: left; display: flex; flex-direction: column; gap: 12px; }
+    .panel-title {
+      font-family: 'Orbitron', monospace; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--cyan), transparent); opacity: 0.4; }
+    .gauge-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .gauge-header { display: flex; justify-content: space-between; font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--text-muted); }
+    .gauge-header .g-val { color: var(--cyan); font-weight: 700; }
+    .gauge-track { height: 6px; background: rgba(0,240,255,0.08); border-radius: 3px; overflow: visible; position: relative; }
+    .gauge-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--cyan-dim), var(--cyan));
+      box-shadow: 0 0 8px var(--cyan);
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    .gauge-fill::after { content: ''; position: absolute; right: 0; top: -2px; width: 2px; height: 10px; background: #fff; border-radius: 1px; box-shadow: 0 0 6px var(--cyan); }
+    .gauge-fill.warn { background: linear-gradient(90deg, #cc4400, var(--orange)); box-shadow: 0 0 8px var(--orange); }
+    .gauge-fill.warn::after { box-shadow: 0 0 6px var(--orange); }
+    .mini-chart-wrap { position: relative; height: 48px; margin-top: 4px; }
+    .mini-chart-wrap canvas { width: 100%; height: 100%; }
+    .log-feed { display: flex; flex-direction: column; gap: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; }
+    .log-entry { display: flex; gap: 8px; opacity: 0.8; animation: log-in 0.4s ease; }
+    @keyframes log-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 0.8; } }
+    .log-ts  { color: rgba(0,240,255,0.5); white-space: nowrap; }
+    .log-msg { color: var(--text-muted); }
+    .log-msg.ok   { color: rgba(0,255,136,0.8); }
+    .log-msg.warn { color: rgba(255,107,0,0.8); }
+    .log-msg.err  { color: rgba(255,34,68,0.9); }
+    #center-panel { grid-area: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; position: relative; }
+    .mode-label { font-family: 'Orbitron', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.25em; color: var(--cyan); text-shadow: var(--glow-cyan); text-transform: uppercase; animation: fade-in 0.4s ease; }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .orb-container { position: relative; width: 280px; height: 280px; display: flex; align-items: center; justify-content: center; }
+    .ring { position: absolute; border-radius: 50%; border: 1px solid; pointer-events: none; }
+    .ring-1 { width: 280px; height: 280px; border-color: rgba(0,240,255,0.15); border-style: dashed; animation: spin-cw 24s linear infinite; }
+    .ring-2 { width: 240px; height: 240px; border-color: rgba(0,240,255,0.1); animation: spin-ccw 18s linear infinite; }
+    .ring-3 { width: 200px; height: 200px; border-top-color: rgba(0,240,255,0.4); border-right-color: transparent; border-bottom-color: rgba(0,240,255,0.2); border-left-color: transparent; animation: spin-cw 10s linear infinite; }
+    .ring-4 { width: 320px; height: 320px; border-color: rgba(0,240,255,0.06); border-style: dashed; animation: spin-ccw 36s linear infinite; }
+    .ring-ticks { position: absolute; width: 320px; height: 320px; border-radius: 50%; animation: spin-ccw 36s linear infinite; }
+    .ring-ticks::before, .ring-ticks::after { content: ''; position: absolute; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    .ring-ticks::before { width: 8px; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+    .ring-ticks::after  { width: 2px; height: 8px; top: 0; left: 50%; transform: translateX(-50%); }
+    @keyframes spin-cw  { to { transform: rotate(360deg); } }
+    @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+    .orb-core {
+      position: relative; width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(0,240,255,0.18), rgba(0,30,60,0.6) 60%, rgba(0,0,0,0.8) 100%);
+      border: 2px solid rgba(0,240,255,0.5);
+      box-shadow: 0 0 0 1px rgba(0,240,255,0.1), 0 0 40px rgba(0,240,255,0.25), 0 0 100px rgba(0,240,255,0.08), inset 0 0 30px rgba(0,240,255,0.1);
+      backdrop-filter: blur(20px); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease; z-index: 2;
+    }
+    .orb-core:hover {
+      box-shadow: 0 0 0 1px rgba(0,240,255,0.25), 0 0 60px rgba(0,240,255,0.5), 0 0 120px rgba(0,240,255,0.2), inset 0 0 40px rgba(0,240,255,0.2);
+      transform: scale(1.04);
+    }
+    .orb-core.listening {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 1px rgba(0,255,136,0.2), 0 0 60px rgba(0,255,136,0.4), 0 0 120px rgba(0,255,136,0.1), inset 0 0 40px rgba(0,255,136,0.15);
+      animation: orb-listen 1.5s ease-in-out infinite alternate;
+    }
+    .orb-core.gaming {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 1px rgba(255,107,0,0.2), 0 0 60px rgba(255,107,0,0.4), 0 0 120px rgba(255,107,0,0.1), inset 0 0 40px rgba(255,107,0,0.15);
+    }
+    .orb-core.thinking { animation: orb-think 0.8s ease-in-out infinite alternate; }
+    @keyframes orb-listen {
+      from { box-shadow: 0 0 0 1px rgba(0,255,136,0.2), 0 0 40px rgba(0,255,136,0.3), 0 0 80px rgba(0,255,136,0.08), inset 0 0 30px rgba(0,255,136,0.1); }
+      to   { box-shadow: 0 0 0 8px rgba(0,255,136,0), 0 0 80px rgba(0,255,136,0.5), 0 0 160px rgba(0,255,136,0.15), inset 0 0 50px rgba(0,255,136,0.2); }
+    }
+    @keyframes orb-think {
+      from { box-shadow: 0 0 0 1px rgba(0,240,255,0.2), 0 0 40px rgba(0,240,255,0.3), inset 0 0 30px rgba(0,240,255,0.1); }
+      to   { box-shadow: 0 0 0 12px rgba(0,240,255,0), 0 0 100px rgba(0,240,255,0.5), inset 0 0 60px rgba(0,240,255,0.25); }
+    }
+    .orb-icon { width: 44px; height: 44px; opacity: 0.9; filter: drop-shadow(0 0 12px var(--cyan)); transition: filter 0.3s ease; }
+    .orb-core.listening .orb-icon { filter: drop-shadow(0 0 12px var(--emerald)); }
+    .orb-core.gaming    .orb-icon { filter: drop-shadow(0 0 12px var(--orange)); }
+    .orb-state-text { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; color: rgba(0,240,255,0.8); text-align: center; }
+    .orb-core.listening .orb-state-text { color: rgba(0,255,136,0.9); }
+    .orb-core.gaming    .orb-state-text { color: rgba(255,107,0,0.9); }
+    #audio-canvas { width: 280px; height: 56px; border-radius: 6px; }
+    .orb-hint { font-family: 'Rajdhani', sans-serif; font-size: 0.78rem; font-weight: 300; color: var(--text-muted); letter-spacing: 0.08em; text-align: center; }
+    .mode-buttons { display: flex; gap: 10px; margin-top: 4px; }
+    .mode-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 12px 20px;
+      background: rgba(0,240,255,0.04);
+      border: 1px solid rgba(0,240,255,0.2);
+      border-radius: 8px; color: rgba(0,240,255,0.7);
+      font-family: 'Rajdhani', sans-serif; font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.08em; cursor: pointer;
+      transition: all 0.25s ease; min-width: 90px;
+      position: relative; overflow: hidden;
+    }
+    .mode-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,240,255,0.1), transparent); opacity: 0; transition: opacity 0.25s ease; }
+    .mode-btn:hover::before { opacity: 1; }
+    .mode-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 20px rgba(0,240,255,0.2), inset 0 0 10px rgba(0,240,255,0.05); transform: translateY(-2px); }
+    .mode-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,240,255,0.1); box-shadow: 0 0 25px rgba(0,240,255,0.3), inset 0 0 15px rgba(0,240,255,0.08); }
+    .mode-btn.active.gaming-btn { border-color: var(--orange); color: var(--orange); background: rgba(255,107,0,0.08); box-shadow: 0 0 25px rgba(255,107,0,0.3), inset 0 0 15px rgba(255,107,0,0.06); }
+    .mode-btn.active.media-btn  { border-color: var(--emerald); color: var(--emerald); background: rgba(0,255,136,0.08); box-shadow: 0 0 25px rgba(0,255,136,0.3), inset 0 0 15px rgba(0,255,136,0.06); }
+    .mode-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    #right-panel { grid-area: right; display: flex; flex-direction: column; gap: 12px; }
+    .agent-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(0,240,255,0.04); border: 1px solid rgba(0,240,255,0.12); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
+    .agent-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); opacity: 0; transition: opacity 0.2s ease; }
+    .agent-card:hover::before { opacity: 1; }
+    .agent-card:hover { background: rgba(0,240,255,0.07); border-color: rgba(0,240,255,0.25); }
+    .agent-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 8px var(--emerald); flex-shrink: 0; }
+    .agent-dot.idle { background: rgba(0,240,255,0.4); box-shadow: none; }
+    .agent-dot.busy { background: var(--orange); box-shadow: 0 0 8px var(--orange); animation: blink-status 1s ease infinite; }
+    .agent-info { flex: 1; }
+    .agent-name { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--text-primary); letter-spacing: 0.06em; }
+    .agent-desc { font-size: 0.58rem; color: var(--text-muted); margin-top: 2px; }
+    .agent-badge { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; padding: 2px 6px; border-radius: 3px; border: 1px solid; letter-spacing: 0.08em; }
+    .agent-badge.online { color: var(--emerald); border-color: rgba(0,255,136,0.35); background: rgba(0,255,136,0.07); }
+    .agent-badge.idle   { color: var(--cyan-dim); border-color: rgba(0,200,220,0.25); background: rgba(0,200,220,0.05); }
+    .agent-badge.busy   { color: var(--orange); border-color: rgba(255,107,0,0.35); background: rgba(255,107,0,0.07); }
+    .quick-action { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,240,255,0.03); border: 1px solid rgba(0,240,255,0.1); border-radius: 5px; cursor: pointer; transition: all 0.2s ease; font-size: 0.68rem; color: var(--text-muted); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
+    .quick-action:hover { background: rgba(0,240,255,0.08); border-color: rgba(0,240,255,0.3); color: var(--cyan); }
+    .quick-action svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    #footer { grid-area: footer; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-top: 1px solid var(--border-glow); background: rgba(3,6,9,0.85); backdrop-filter: blur(20px); border-radius: 6px; font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; color: var(--text-muted); }
+    .footer-items { display: flex; gap: 20px; align-items: center; }
+    .footer-item { display: flex; gap: 6px; align-items: center; }
+    .footer-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .footer-dot.green  { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+    .footer-dot.yellow { background: #ffcc00; box-shadow: 0 0 6px #ffcc00; animation: blink-status 2s ease infinite; }
+    .footer-dot.cyan   { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    #toast-container { position: fixed; top: 80px; right: 24px; z-index: 50; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { background: rgba(5,12,25,0.92); backdrop-filter: blur(12px); border: 1px solid rgba(0,240,255,0.3); border-left: 3px solid var(--cyan); border-radius: 6px; padding: 10px 16px; font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--text-primary); max-width: 280px; animation: toast-in 0.35s ease, toast-out 0.35s ease 3.65s forwards; box-shadow: 0 0 20px rgba(0,240,255,0.15); }
+    .toast.warn { border-left-color: var(--orange); box-shadow: 0 0 20px rgba(255,107,0,0.15); }
+    .toast .t-title { color: var(--cyan); font-weight: 700; margin-bottom: 3px; letter-spacing: 0.08em; }
+    .toast.warn .t-title { color: var(--orange); }
+    @keyframes toast-in  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+    @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
+  </style>
+</head>
+<body>
+<canvas id="neural-canvas"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+<div id="toast-container"></div>
+<div id="app">
+  <header id="header" class="panel">
+    <div class="logo-group">
+      <div class="logo-pulse"></div>
+      <div>
+        <div class="logo-title"><span>F.R.I.D.A.Y.</span> // CORE v4.2</div>
+        <div class="logo-sub">FEMALE REPLACEMENT INTELLIGENT DIGITAL ASSISTANT YOUTH</div>
+      </div>
+    </div>
+    <div class="header-metrics">
+      <div class="metric"><span class="metric-label">CPU</span><span class="metric-value" id="cpu-val">12%</span></div>
+      <div class="metric"><span class="metric-label">RAM</span><span class="metric-value warn" id="ram-val">67%</span></div>
+      <div class="metric"><span class="metric-label">GPU</span><span class="metric-value ok" id="gpu-val">31%</span></div>
+      <div class="metric"><span class="metric-label">LATÊNCIA</span><span class="metric-value" id="lat-val">14ms</span></div>
+      <div class="metric"><span class="metric-label">TEMP</span><span class="metric-value warn" id="temp-val">68°C</span></div>
+      <div class="status-badge" id="status-badge">● ONLINE</div>
+    </div>
+    <div class="header-time" id="clock-display">--:--:--</div>
+  </header>
+
+  <aside id="left-panel">
+    <div class="panel" style="flex:1">
+      <div class="panel-title">Telemetria do Sistema</div>
+      <div class="gauge-row">
+        <div class="gauge-header"><span>CPU</span><span class="g-val" id="cpu-bar-val">12%</span></div>
+        <div class="gauge-track"><div class="gauge-fill" id="cpu-bar" style="width:12%"></div></div>
+        <div class="mini-chart-wrap"><canvas id="cpu-chart"></canvas></div>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge-header"><span>RAM</span><span class="g-val warn" id="ram-bar-val">67%</span></div>
+        <div class="gauge-track"><div class="gauge-fill warn" id="ram-bar" style="width:67%"></div></div>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge-header"><span>GPU</span><span class="g-val ok" id="gpu-bar-val">31%</span></div>
+        <div class="gauge-track"><div class="gauge-fill" id="gpu-bar" style="width:31%; background:linear-gradient(90deg,#00cc66,#00ff88); box-shadow:0 0 8px #00ff88;"></div></div>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge-header"><span>NET</span><span class="g-val" id="net-bar-val">8.4 Mb/s</span></div>
+        <div class="gauge-track"><div class="gauge-fill" id="net-bar" style="width:22%"></div></div>
+      </div>
+      <div class="panel-title" style="margin-top:14px">Log de Atividade</div>
+      <div class="log-feed" id="log-feed">
+        <div class="log-entry"><span class="log-ts">21:30:01</span><span class="log-msg ok">Núcleo neural inicializado.</span></div>
+        <div class="log-entry"><span class="log-ts">21:30:02</span><span class="log-msg ok">Modelos carregados em VRAM.</span></div>
+        <div class="log-entry"><span class="log-ts">21:30:04</span><span class="log-msg">Microfone: canal 1 ativo.</span></div>
+        <div class="log-entry"><span class="log-ts">21:30:07</span><span class="log-msg">Pipelines RAG prontos.</span></div>
+        <div class="log-entry"><span class="log-ts">21:30:09</span><span class="log-msg ok">Sistema ONLINE — aguardando.</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Rede &amp; Segurança</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div class="quick-action" onclick="showToast('VPN','Túnel seguro ativo — nó Frankfurt','ok')">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VPN — Frankfurt Node
+        </div>
+        <div class="quick-action" onclick="showToast('Firewall','Regras atualizadas — 0 ameaças detectadas','ok')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Firewall — Ativo
+        </div>
+        <div class="quick-action" onclick="showToast('Monitor','Processos suspeitos: nenhum','ok')">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Scan de Processos
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main id="center-panel">
+    <div class="mode-label" id="mode-label">// STANDBY MODE //</div>
+    <div class="orb-container">
+      <div class="ring ring-4"></div>
+      <div class="ring-ticks"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="orb-core" id="orb-core" onclick="cycleOrbState()">
+        <svg class="orb-icon" id="orb-icon" viewBox="0 0 24 24">
+          <rect x="9" y="2" width="6" height="12" rx="3" ry="3"/>
+          <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="8" y1="22" x2="16" y2="22"/>
+        </svg>
+        <span class="orb-state-text" id="orb-state-text">AGUARDANDO</span>
+      </div>
+    </div>
+    <canvas id="audio-canvas"></canvas>
+    <p class="orb-hint" id="orb-hint">Sistemas neurais prontos — clique no núcleo para ativar</p>
+    <div class="mode-buttons">
+      <button class="mode-btn gaming-btn" id="btn-gaming" onclick="setMode('gaming')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="16" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="10" r="0.7" fill="currentColor"/></svg>
+        Modo Gaming
+      </button>
+      <button class="mode-btn media-btn" id="btn-media" onclick="setMode('media')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        Audio &amp; Mídia
+      </button>
+      <button class="mode-btn" id="btn-ai" onclick="setMode('ai')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="6.34" cy="6.34" r="2"/><circle cx="17.66" cy="17.66" r="2"/><circle cx="6.34" cy="17.66" r="2"/><circle cx="17.66" cy="6.34" r="2"/></svg>
+        Síntese IA
+      </button>
+      <button class="mode-btn" id="btn-listen" onclick="setMode('listen')">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3" ry="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        Escutar
+      </button>
+    </div>
+  </main>
+
+  <aside id="right-panel">
+    <div class="panel" style="flex:1">
+      <div class="panel-title">Agentes Ativos</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div class="agent-card" onclick="showToast('RAG Pipeline','Indexação: 99.4% — 12k documentos','ok')">
+          <div class="agent-dot"></div>
+          <div class="agent-info"><div class="agent-name">RAG Pipeline</div><div class="agent-desc">Recuperação semântica • 12k docs</div></div>
+          <span class="agent-badge online">ONLINE</span>
+        </div>
+        <div class="agent-card" onclick="showToast('Voice Engine','STT: Whisper Large v3 • 180ms latência','ok')">
+          <div class="agent-dot"></div>
+          <div class="agent-info"><div class="agent-name">Voice Engine</div><div class="agent-desc">STT/TTS • Whisper v3</div></div>
+          <span class="agent-badge online">ONLINE</span>
+        </div>
+        <div class="agent-card" onclick="showToast('LLM Core','Gemini 2.5 Pro • 87 tok/s em execução','ok')">
+          <div class="agent-dot busy"></div>
+          <div class="agent-info"><div class="agent-name">LLM Core</div><div class="agent-desc">Inferência local • 87 tok/s</div></div>
+          <span class="agent-badge busy">OCUPADO</span>
+        </div>
+        <div class="agent-card" onclick="showToast('Automation Bot','Aguardando gatilho de automação','')">
+          <div class="agent-dot idle"></div>
+          <div class="agent-info"><div class="agent-name">Automation Bot</div><div class="agent-desc">Controle de sistema • Standby</div></div>
+          <span class="agent-badge idle">IDLE</span>
+        </div>
+        <div class="agent-card" onclick="showToast('Vision Module','Câmera não detectada — modo texto ativo','warn')">
+          <div class="agent-dot idle"></div>
+          <div class="agent-info"><div class="agent-name">Vision Module</div><div class="agent-desc">Análise de imagem • Offline</div></div>
+          <span class="agent-badge idle">IDLE</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Ações Rápidas</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div class="quick-action" onclick="addLog('Otimização de memória iniciada...','warn'); showToast('Sistema','Limpando cache e otimizando RAM...','warn')">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+          Otimizar Memória
+        </div>
+        <div class="quick-action" onclick="addLog('Turbo CPU ativado — processos suspensos','ok'); showToast('Gaming','Suspendendo processos background...','ok')">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Modo Turbo CPU
+        </div>
+        <div class="quick-action" onclick="addLog('Novo agente instanciado — aguardando config','ok'); showToast('Fábrica de IA','Agente autônomo #6 criado com sucesso','ok')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Criar Agente
+        </div>
+        <div class="quick-action" onclick="addLog('Backup iniciado — destino: NAS local',''); showToast('Backup','Sincronizando com armazenamento local...','ok')">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Backup Neural
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <footer id="footer">
+    <div class="footer-items">
+      <div class="footer-item"><div class="footer-dot green"></div>Kernel Neural: ATIVO</div>
+      <div class="footer-item"><div class="footer-dot cyan"></div>WebSocket: ws://localhost:8765</div>
+      <div class="footer-item"><div class="footer-dot yellow"></div>LLM: Inferência em curso</div>
+      <div class="footer-item"><div class="footer-dot green"></div>Memória Persistente: OK</div>
+    </div>
+    <div style="display:flex; gap:20px; align-items:center;">
+      <span id="uptime-display">UPTIME: 00:00:00</span>
+      <span>BUILD: 2026.08.16-α</span>
+      <span style="color:rgba(0,240,255,0.6)">© F.R.I.D.A.Y. SYSTEMS</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('neural-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  const PARTICLE_COUNT = 90;
+  const MAX_DIST = 130;
+  const particles = [];
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * W; this.y = Math.random() * H;
+      this.vx = (Math.random() - 0.5) * 0.4; this.vy = (Math.random() - 0.5) * 0.4;
+      this.r = Math.random() * 1.5 + 0.5;
+      this.alpha = Math.random() * 0.5 + 0.1;
+      this.pulse = Math.random() * Math.PI * 2;
+    }
+    update() {
+      this.x += this.vx; this.y += this.vy; this.pulse += 0.02;
+      if (this.x < 0 || this.x > W) this.vx *= -1;
+      if (this.y < 0 || this.y > H) this.vy *= -1;
+    }
+    draw() {
+      const a = this.alpha * (0.7 + 0.3 * Math.sin(this.pulse));
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,240,255,' + a + ')';
+      ctx.shadowBlur = 6; ctx.shadowColor = '#00f0ff'; ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+  function drawConnections() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < MAX_DIST) {
+          const a = (1 - dist / MAX_DIST) * 0.12;
+          ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = 'rgba(0,240,255,' + a + ')'; ctx.lineWidth = 0.6; ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    drawConnections();
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+const startTime = Date.now();
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock-display').textContent = h + ':' + m + ':' + s;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const uh = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+  const um = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+  const us = String(elapsed % 60).padStart(2,'0');
+  document.getElementById('uptime-display').textContent = 'UPTIME: ' + uh + ':' + um + ':' + us;
+}
+setInterval(updateClock, 1000); updateClock();
+
+const telemetry = { cpu: 12, ram: 67, gpu: 31, lat: 14, temp: 68, net: 8.4 };
+function jitter(base, range, min, max) { return Math.min(max, Math.max(min, base + (Math.random() - 0.5) * range)); }
+
+const cpuHistory = Array.from({length: 40}, () => Math.random() * 20 + 5);
+const cpuChartCanvas = document.getElementById('cpu-chart');
+const cpuChartCtx = cpuChartCanvas.getContext('2d');
+
+function drawMiniChart() {
+  const W = cpuChartCanvas.offsetWidth || 220;
+  const H = cpuChartCanvas.offsetHeight || 48;
+  cpuChartCanvas.width = W; cpuChartCanvas.height = H;
+  cpuChartCtx.clearRect(0,0,W,H);
+  const grad = cpuChartCtx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,240,255,0.3)'); grad.addColorStop(1, 'rgba(0,240,255,0)');
+  cpuChartCtx.beginPath();
+  const step = W / (cpuHistory.length - 1);
+  cpuHistory.forEach((v, i) => {
+    const x = i * step; const y = H - (v / 100) * H;
+    if (i === 0) cpuChartCtx.moveTo(x, y); else cpuChartCtx.lineTo(x, y);
+  });
+  cpuChartCtx.strokeStyle = 'rgba(0,240,255,0.8)'; cpuChartCtx.lineWidth = 1.5;
+  cpuChartCtx.shadowBlur = 6; cpuChartCtx.shadowColor = '#00f0ff'; cpuChartCtx.stroke(); cpuChartCtx.shadowBlur = 0;
+  cpuChartCtx.lineTo(W, H); cpuChartCtx.lineTo(0, H); cpuChartCtx.closePath();
+  cpuChartCtx.fillStyle = grad; cpuChartCtx.fill();
+}
+
+function updateTelemetry() {
+  telemetry.cpu  = jitter(telemetry.cpu,  8,  2, 95);
+  telemetry.ram  = jitter(telemetry.ram,  3, 40, 95);
+  telemetry.gpu  = jitter(telemetry.gpu, 10,  5, 90);
+  telemetry.lat  = jitter(telemetry.lat,  6,  5, 80);
+  telemetry.temp = jitter(telemetry.temp, 2, 45, 90);
+  telemetry.net  = Math.max(0.1, telemetry.net + (Math.random()-0.5)*1.5);
+  const cpuPct = Math.round(telemetry.cpu);
+  const ramPct = Math.round(telemetry.ram);
+  const gpuPct = Math.round(telemetry.gpu);
+  const latMs  = Math.round(telemetry.lat);
+  const tempC  = Math.round(telemetry.temp);
+  const netMb  = telemetry.net.toFixed(1);
+  document.getElementById('cpu-val').textContent  = cpuPct + '%';
+  document.getElementById('ram-val').textContent  = ramPct + '%';
+  document.getElementById('gpu-val').textContent  = gpuPct + '%';
+  document.getElementById('lat-val').textContent  = latMs + 'ms';
+  document.getElementById('temp-val').textContent = tempC + '°C';
+  document.getElementById('cpu-bar').style.width     = cpuPct + '%';
+  document.getElementById('cpu-bar-val').textContent = cpuPct + '%';
+  document.getElementById('ram-bar').style.width     = ramPct + '%';
+  document.getElementById('ram-bar-val').textContent = ramPct + '%';
+  document.getElementById('gpu-bar').style.width     = gpuPct + '%';
+  document.getElementById('gpu-bar-val').textContent = gpuPct + '%';
+  document.getElementById('net-bar').style.width     = Math.min(100, telemetry.net * 5) + '%';
+  document.getElementById('net-bar-val').textContent = netMb + ' Mb/s';
+  cpuHistory.push(telemetry.cpu);
+  if (cpuHistory.length > 40) cpuHistory.shift();
+  drawMiniChart();
+}
+setInterval(updateTelemetry, 1200); drawMiniChart();
+
+(function() {
+  const canvas = document.getElementById('audio-canvas');
+  const ctx = canvas.getContext('2d');
+  const BARS = 64;
+  let phase = 0;
+  let amplitude = 0.3;
+  window.setAudioAmplitude = function(a) { amplitude = a; };
+  function resize() { canvas.width = canvas.offsetWidth || 280; canvas.height = canvas.offsetHeight || 56; }
+  window.addEventListener('resize', resize); resize();
+  function animate() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const barW = W / BARS;
+    const centerY = H / 2;
+    for (let i = 0; i < BARS; i++) {
+      const t = i / BARS;
+      const wave1 = Math.sin(t * Math.PI * 4 + phase) * amplitude;
+      const wave2 = Math.sin(t * Math.PI * 7 + phase * 1.3) * amplitude * 0.5;
+      const wave3 = Math.sin(t * Math.PI * 2 + phase * 0.7) * amplitude * 0.3;
+      const h = Math.abs(wave1 + wave2 + wave3) * H * 0.9 + 1;
+      const grad = ctx.createLinearGradient(0, centerY - h, 0, centerY + h);
+      grad.addColorStop(0,   'rgba(0,240,255,0.9)');
+      grad.addColorStop(0.5, 'rgba(0,200,255,0.6)');
+      grad.addColorStop(1,   'rgba(0,240,255,0.9)');
+      ctx.fillStyle = grad;
+      ctx.shadowBlur = 4; ctx.shadowColor = '#00f0ff';
+      ctx.fillRect(i * barW + 1, centerY - h, barW - 2, h * 2);
+    }
+    ctx.shadowBlur = 0;
+    phase += 0.06;
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+const ORB_STATES = {
+  standby:  { label: '// STANDBY MODE //', orbClass: '', stateText: 'AGUARDANDO', hint: 'Sistemas neurais prontos — clique no núcleo para ativar', audioAmp: 0.2 },
+  listen:   { label: '// ESCUTANDO — PROCESSANDO VOZ //', orbClass: 'listening', stateText: 'OUVINDO...', hint: 'Microfone ativo — fale agora...', audioAmp: 0.85 },
+  thinking: { label: '// PROCESSAMENTO NEURAL ATIVO //', orbClass: 'thinking', stateText: 'PENSANDO...', hint: 'Inferência LLM em execução — aguarde...', audioAmp: 0.5 },
+  gaming:   { label: '// MODO GAMING — MÁXIMA PERFORMANCE //', orbClass: 'gaming', stateText: 'GAMING ON', hint: 'CPU/GPU priorizado — background suspenso', audioAmp: 0.1 },
+  media:    { label: '// REPRODUTOR MULTIMÍDIA ATIVO //', orbClass: 'listening', stateText: 'MÍDIA', hint: 'Controle de áudio e mídia ativo', audioAmp: 0.7 },
+  ai:       { label: '// SÍNTESE DE AGENTE IA — ONLINE //', orbClass: 'thinking', stateText: 'SINTETIZANDO', hint: 'Fábrica de IA ativa — criando agente autônomo...', audioAmp: 0.4 }
+};
+
+const ORB_ICONS = {
+  standby:  '<rect x="9" y="2" width="6" height="12" rx="3" ry="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>',
+  listen:   '<rect x="9" y="2" width="6" height="12" rx="3" ry="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>',
+  thinking: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>',
+  gaming:   '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="16" cy="12" r="1" fill="currentColor"/><circle cx="18" cy="10" r="0.7" fill="currentColor"/>',
+  media:    '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  ai:       '<circle cx="12" cy="4" r="2"/><circle cx="12" cy="20" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="6.34" cy="6.34" r="2"/><circle cx="17.66" cy="17.66" r="2"/><circle cx="6.34" cy="17.66" r="2"/><circle cx="17.66" cy="6.34" r="2"/>'
+};
+
+let orbCycle = ['standby','listen','thinking','standby'];
+let orbIdx = 0;
+
+function applyOrbState(key) {
+  const state = ORB_STATES[key];
+  if (!state) return;
+  const orb  = document.getElementById('orb-core');
+  const icon = document.getElementById('orb-icon');
+  orb.className = 'orb-core' + (state.orbClass ? ' ' + state.orbClass : '');
+  icon.innerHTML = ORB_ICONS[key] || ORB_ICONS.standby;
+  document.getElementById('orb-state-text').textContent = state.stateText;
+  document.getElementById('mode-label').textContent = state.label;
+  document.getElementById('orb-hint').textContent = state.hint;
+  if (window.setAudioAmplitude) window.setAudioAmplitude(state.audioAmp);
+  ['btn-gaming','btn-media','btn-ai','btn-listen'].forEach(id => { const b = document.getElementById(id); if(b) b.classList.remove('active'); });
+  const btnMap = { gaming:'btn-gaming', media:'btn-media', ai:'btn-ai', listen:'btn-listen' };
+  if (btnMap[key]) { const b = document.getElementById(btnMap[key]); if(b) b.classList.add('active'); }
+}
+
+function cycleOrbState() {
+  orbIdx = (orbIdx + 1) % orbCycle.length;
+  applyOrbState(orbCycle[orbIdx]);
+}
+
+function setMode(mode) {
+  orbCycle = [mode, 'thinking', mode];
+  orbIdx = 0;
+  applyOrbState(mode);
+  addLog('Modo ativado: ' + mode.toUpperCase(), 'ok');
+  const msgs = { gaming:'Modo Gaming ativado — prioridade máxima de CPU/GPU', media:'Reprodutor multimídia ativo — controle de áudio pronto', ai:'Síntese de IA iniciada — criando pipeline de agente', listen:'Microfone ativo — FRIDAY está ouvindo...' };
+  showToast('F.R.I.D.A.Y.', msgs[mode] || 'Modo alterado com sucesso', 'ok');
+}
+
+function addLog(msg, type) {
+  type = type || '';
+  const feed = document.getElementById('log-feed');
+  const now  = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<span class="log-ts">' + ts + '</span><span class="log-msg ' + type + '">' + msg + '</span>';
+  feed.appendChild(entry);
+  feed.scrollTop = feed.scrollHeight;
+  while (feed.children.length > 12) feed.removeChild(feed.firstChild);
+}
+
+// ============================================================
+//  WebSocket Hub Client — conecta ao server.py em tempo real
+// ============================================================
+(function() {
+  const WS_URL    = 'ws://localhost:8000/ws';
+  const RECONNECT_BASE_MS = 2000;
+  const RECONNECT_MAX_MS  = 30000;
+  let ws = null;
+  let reconnectDelay = RECONNECT_BASE_MS;
+  let reconnectTimer = null;
+  let hubConnected   = false;
+
+  function wsConnect() {
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    addLog('Conectando ao Hub Central...', '');
+    updateFooterStatus(false);
+
+    try {
+      ws = new WebSocket(WS_URL);
+    } catch(e) {
+      scheduleReconnect();
+      return;
+    }
+
+    ws.onopen = function() {
+      hubConnected = true;
+      reconnectDelay = RECONNECT_BASE_MS;
+      addLog('Hub Central conectado — telemetria ativa.', 'ok');
+      updateFooterStatus(true);
+      showToast('F.R.I.D.A.Y.', 'Hub Central online. Sistemas reais ativados.', 'ok');
+      // Para o simulador de dados fake quando conectado ao real
+      if (window._fakeDataInterval) { clearInterval(window._fakeDataInterval); }
+    };
+
+    ws.onmessage = function(evt) {
+      try {
+        var data = JSON.parse(evt.data);
+        var type = data.type || '';
+        if (type === 'telemetry') {
+          applyRealTelemetry(data);
+        } else if (type === 'response' || type === 'connected') {
+          var msg = data.message || data.response || '';
+          var mode = data.mode || '';
+          if (msg) addLog(msg, data.status === 'ok' ? 'ok' : data.status === 'error' ? 'err' : '');
+          if (mode) applyOrbState(mode);
+          if (data.status === 'ok' && msg) showToast('Hub', msg, 'ok');
+          if (data.status === 'error' && msg) showToast('Hub', msg, 'warn');
+        } else if (type === 'pong') {
+          // heartbeat recebido
+        }
+      } catch(e) { /* JSON parse error */ }
+    };
+
+    ws.onerror = function() {
+      hubConnected = false;
+      updateFooterStatus(false);
+      addLog('Erro na conexão WebSocket.', 'warn');
+    };
+
+    ws.onclose = function() {
+      hubConnected = false;
+      updateFooterStatus(false);
+      if (!window._fakeDataInterval) {
+        // Retoma dados simulados enquanto offline
+        window._fakeDataInterval = setInterval(updateTelemetry, 1200);
+      }
+      addLog('Hub desconectado — reconectando...', 'warn');
+      scheduleReconnect();
+    };
+  }
+
+  function scheduleReconnect() {
+    reconnectDelay = Math.min(reconnectDelay * 1.5, RECONNECT_MAX_MS);
+    reconnectTimer = setTimeout(wsConnect, reconnectDelay);
+  }
+
+  function applyRealTelemetry(data) {
+    var cpu  = data.cpu  || {};
+    var ram  = data.ram  || {};
+    var gpu  = data.gpu  || {};
+    var disk = data.disk || {};
+    var net  = data.net  || {};
+
+    var cpuPct = Math.round(cpu.pct  || 0);
+    var ramPct = Math.round(ram.pct  || 0);
+    var gpuPct = Math.round(gpu.load_pct || 0);
+    var latMs  = data.latency_ms || 0;
+    var tempC  = gpu.temp_c || 0;
+    var netMb  = ((net.bytes_recv || 0) / 1024 / 1024).toFixed(1);
+
+    // Header metrics
+    document.getElementById('cpu-val').textContent  = cpuPct + '%';
+    document.getElementById('ram-val').textContent  = ramPct + '%';
+    document.getElementById('gpu-val').textContent  = gpuPct + '%';
+    if (latMs) document.getElementById('lat-val').textContent = latMs + 'ms';
+    if (tempC) document.getElementById('temp-val').textContent = tempC + '°C';
+
+    // Bars
+    document.getElementById('cpu-bar').style.width     = cpuPct + '%';
+    document.getElementById('cpu-bar-val').textContent = cpuPct + '%';
+    document.getElementById('ram-bar').style.width     = ramPct + '%';
+    document.getElementById('ram-bar-val').textContent = ramPct + '%';
+    document.getElementById('gpu-bar').style.width     = gpuPct + '%';
+    document.getElementById('gpu-bar-val').textContent = gpuPct + '%';
+    if (net.bytes_recv) {
+      document.getElementById('net-bar-val').textContent = netMb + ' Mb/s';
+      document.getElementById('net-bar').style.width = Math.min(100, parseFloat(netMb) * 5) + '%';
+    }
+
+    // Mini chart
+    cpuHistory.push(cpu.pct || 0);
+    if (cpuHistory.length > 40) cpuHistory.shift();
+    drawMiniChart();
+
+    // Conectados ao hub
+    var clients = data.clients_connected || 0;
+    if (clients > 1) addLog(clients + ' cliente(s) conectados ao Hub.', '');
+  }
+
+  function updateFooterStatus(connected) {
+    var badge = document.getElementById('status-badge');
+    if (badge) {
+      badge.textContent = connected ? '● ONLINE' : '● OFFLINE';
+      badge.style.color = connected ? 'var(--emerald)' : 'var(--red-alert)';
+      badge.style.borderColor = connected ? 'rgba(0,255,136,0.35)' : 'rgba(255,34,68,0.35)';
+    }
+    // Atualiza footer WebSocket
+    var wsFooter = document.querySelector('.footer-item:nth-child(2)');
+    if (wsFooter) wsFooter.innerHTML = '<div class="footer-dot ' + (connected ? 'cyan' : 'yellow') + '"></div>' + (connected ? 'Hub: ws://localhost:8000' : 'Hub: reconectando...');
+  }
+
+  // Expõe função de envio para os botões de modo
+  window.sendHubCommand = function(payload) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(payload));
+    }
+  };
+
+  // Inicia conexão
+  wsConnect();
+  // Heartbeat a cada 20s
+  setInterval(function() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({action: 'ping'}));
+    }
+  }, 20000);
+})();
+
+// ── Sobrescreve setMode para enviar ao Hub real ──────────────────────────────
+function setMode(mode) {
+  orbCycle = [mode, 'thinking', mode];
+  orbIdx = 0;
+  applyOrbState(mode);
+  addLog('Modo ativado: ' + mode.toUpperCase(), 'ok');
+
+  // Envia comando ao Hub se conectado
+  const actionMap = {
+    gaming:  'gaming_mode',
+    silent:  'silent_mode',
+    media:   null,           // controle local
+    ai:      null,           // síntese local
+    listen:  null,           // STT local
+  };
+  const action = actionMap[mode];
+  if (action) {
+    window.sendHubCommand && window.sendHubCommand({action: action});
+  }
+
+  const msgs = {
+    gaming:'Modo Gaming ativado — comandos enviados ao Hub',
+    media:'Reprodutor multimídia ativo — controle de áudio pronto',
+    ai:'Síntese de IA iniciada — criando pipeline de agente',
+    listen:'Microfone ativo — FRIDAY está ouvindo...'
+  };
+  showToast('F.R.I.D.A.Y.', msgs[mode] || 'Modo alterado com sucesso', 'ok');
+}
+
+function showToast(title, msg, type) {
+  type = type || '';
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (type === 'warn' ? ' warn' : '');
+  toast.innerHTML = '<div class="t-title">' + title + '</div><div>' + msg + '</div>';
+  container.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 4000);
+}
+
+function addLog(msg, type) {
+  type = type || '';
+  const feed = document.getElementById('log-feed');
+  const now  = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<span class="log-ts">' + ts + '</span><span class="log-msg ' + type + '">' + msg + '</span>';
+  feed.appendChild(entry);
+  feed.scrollTop = feed.scrollHeight;
+  while (feed.children.length > 12) feed.removeChild(feed.firstChild);
+}
+
+// Dados simulados como fallback enquanto hub está offline
+window._fakeDataInterval = setInterval(updateTelemetry, 1200);
+
+setTimeout(function() { showToast('Sistema', 'Núcleo neural inicializado com sucesso.', 'ok'); }, 600);
+setTimeout(function() { showToast('F.R.I.D.A.Y.', 'Conectando ao Hub Central...', ''); }, 1800);
+applyOrbState('standby');
+</script>
+</body>
+</html>

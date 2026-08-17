@@ -1,0 +1,41 @@
+name: friday_mobile
+description: "F.R.I.D.A.Y. Mobile — Neural AI Command Interface para Android/iOS"
+version: 4.2.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # WebSocket e rede
+  web_socket_channel: ^3.0.0
+  http: ^1.2.0
+  network_info_plus: ^6.0.0   # Detecta IP da rede local
+
+  # UI / Animações
+  animate_do: ^3.3.2
+  flutter_animate: ^4.5.0
+
+  # Estado
+  provider: ^6.1.2
+
+  # Utilitários
+  shared_preferences: ^2.2.3
+  permission_handler: ^11.3.1
+  vibration: ^2.0.0
+
+  # Ícones
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
