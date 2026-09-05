@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="F.R.I.D.A.Y. Local — assistente leve para automações no Windows."
+    />
+    <title>F.R.I.D.A.Y. Local</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./brain.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="titlebar" data-tauri-drag-region>
+        <div class="titlebar-brand" data-tauri-drag-region>
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3.2a4.4 4.4 0 0 1 4.2 3.1 4.4 4.4 0 0 1 3.1 6.8 4.4 4.4 0 0 1-3.6 6.7 4.4 4.4 0 0 1-7.3.1 4.4 4.4 0 0 1-3.6-6.8 4.4 4.4 0 0 1 3.1-6.8A4.4 4.4 0 0 1 12 3.2Z"/><path d="m8 8.2 4-2.3 4 2.3v4.6l-4 2.3-4-2.3V8.2Z"/></svg>
+          </span>
+          <span>F.R.I.D.A.Y.</span>
+          <span class="titlebar-version">LOCAL 5.3.1</span>
+        </div>
+        <div class="window-actions">
+          <button class="window-button" id="minimize-button" aria-label="Minimizar">
+            <svg viewBox="0 0 16 16"><path d="M3 8h10" /></svg>
+          </button>
+          <button class="window-button" id="maximize-button" aria-label="Maximizar">
+            <svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1" /></svg>
+          </button>
+          <button class="window-button close" id="close-button" aria-label="Ocultar na bandeja">
+            <svg viewBox="0 0 16 16"><path d="m4 4 8 8m0-8-8 8" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="app-body">
+        <aside class="sidebar">
+          <button class="new-chat" id="new-chat-button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            Nova conversa
+          </button>
+
+          <nav class="nav-groups" aria-label="Atalhos">
+            <section class="nav-group">
+              <h2>Início rápido</h2>
+              <button class="nav-item voice-nav" id="voice-nav-button">
+                <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0m-7 7v3m-4 0h8"/></svg>
+                <span id="voice-nav-label">Ativar “Sexta-feira”</span>
+                <span class="voice-live-dot" aria-hidden="true"></span>
+              </button>
+              <button class="nav-item" id="audio-settings-button">
+                <svg viewBox="0 0 24 24"><path d="M4 12h3m10 0h3M7 7l2 2m6 6 2 2m0-10-2 2m-6 6-2 2"/><circle cx="12" cy="12" r="4"/></svg>
+                Configurar áudio
+              </button>
+              <button class="nav-item" data-command="abra o Spotify">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.5 10.3c3.2-1 7.2-.7 9.8.8M8.2 13.2c2.7-.8 6.1-.5 8.4.7M9 16c2.1-.5 4.7-.3 6.5.5"/></svg>
+                Abrir Spotify
+              </button>
+              <button class="nav-item" id="spotify-connect-button">
+                <svg viewBox="0 0 24 24"><path d="M8.2 12.2 10.7 14.7 16 9.4"/><path d="M20 12a8 8 0 1 1-2.3-5.7"/></svg>
+                <span id="spotify-connect-label">Conectar Spotify</span>
+              </button>
+              <button class="nav-item" data-command="abra a calculadora">
+                <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h1m3 0h1m3 0h1M8 15h1m3 0h1m3 0h1M8 18h1m3 0h5"/></svg>
+                Calculadora
+              </button>
+              <button class="nav-item" data-command="pesquise no Google">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                Pesquisa no Google
+              </button>
+            </section>
+
+            <section class="nav-group">
+              <h2>Mídia</h2>
+              <button class="nav-item" data-command="pause a música">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14m8-14v14"/></svg>
+                Play / pause
+              </button>
+              <button class="nav-item" data-command="próxima música">
+                <svg viewBox="0 0 24 24"><path d="m5 5 10 7L5 19V5Zm11 0v14"/></svg>
+                Próxima faixa
+              </button>
+              <button class="nav-item" data-command="aumente o volume">
+                <svg viewBox="0 0 24 24"><path d="M5 9v6h4l5 4V5L9 9H5Zm12-1c1.4 1 2 2.3 2 4s-.6 3-2 4"/></svg>
+                Aumentar volume
+              </button>
+            </section>
+          </nav>
+
+          <div class="privacy-card">
+            <div class="privacy-icon">
+              <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            </div>
+            <div>
+              <strong>Privado por padrão</strong>
+              <p>Sem nuvem, API ou histórico permanente.</p>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <span class="status-dot"></span>
+            <span>Núcleo local ativo</span>
+            <span class="tiny">v5.3.1</span>
+          </div>
+        </aside>
+
+        <main class="workspace">
+          <header class="workspace-header">
+            <button class="model-chip" id="model-info-button">
+              F.R.I.D.A.Y. Local
+              <svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>
+            </button>
+            <div class="system-badges">
+              <span class="system-badge"><span class="status-dot"></span>Offline</span>
+              <span class="system-badge" id="cpu-badge">CPU —%</span>
+              <span class="system-badge" id="ram-badge">RAM —%</span>
+            </div>
+          </header>
+
+          <section class="conversation" id="conversation" aria-live="polite">
+            <div class="welcome" id="welcome">
+              <div class="hero-mark" aria-hidden="true">
+                <span class="hero-ring ring-a"></span>
+                <span class="hero-ring ring-b"></span>
+                <span class="hero-core">
+                  <svg viewBox="0 0 24 24"><path d="M12 3.2a4.4 4.4 0 0 1 4.2 3.1 4.4 4.4 0 0 1 3.1 6.8 4.4 4.4 0 0 1-3.6 6.7 4.4 4.4 0 0 1-7.3.1 4.4 4.4 0 0 1-3.6-6.8 4.4 4.4 0 0 1 3.1-6.8A4.4 4.4 0 0 1 12 3.2Z"/><path d="m8 8.2 4-2.3 4 2.3v4.6l-4 2.3-4-2.3V8.2Z"/></svg>
+                </span>
+              </div>
+              <p class="eyebrow">ASSISTENTE LOCAL PARA WINDOWS</p>
+              <h1>O que vamos fazer no seu PC?</h1>
+              <p class="welcome-copy">
+                Escreva naturalmente. Eu reconheço a intenção no próprio dispositivo e executo apenas ações locais permitidas.
+              </p>
+              <div class="suggestion-grid">
+                <button class="suggestion" data-command="coloque Starboy no Spotify">
+                  <span class="suggestion-icon green">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.5 10.3c3.2-1 7.2-.7 9.8.8M8.2 13.2c2.7-.8 6.1-.5 8.4.7M9 16c2.1-.5 4.7-.3 6.5.5"/></svg>
+                  </span>
+                  <span><strong>Ouvir uma música</strong><small>“Coloque Starboy no Spotify”</small></span>
+                  <svg class="arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <button class="suggestion" data-command="abra o Minecraft">
+                  <span class="suggestion-icon violet">
+                    <svg viewBox="0 0 24 24"><path d="M8 7h8a5 5 0 0 1 4.8 6.4l-1 3.4a2 2 0 0 1-3.3.9L14 15h-4l-2.5 2.7a2 2 0 0 1-3.3-.9l-1-3.4A5 5 0 0 1 8 7Z"/><path d="M7 11v3m-1.5-1.5h3M16.5 11.5h.01m2 2h.01"/></svg>
+                  </span>
+                  <span><strong>Abrir um jogo</strong><small>“Abra o Minecraft”</small></span>
+                  <svg class="arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <button class="suggestion" data-command="pesquise clima em São Paulo no Google">
+                  <span class="suggestion-icon blue">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                  </span>
+                  <span><strong>Pesquisar na web</strong><small>“Pesquise clima em São Paulo”</small></span>
+                  <svg class="arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <button class="suggestion" data-command="feche o Discord">
+                  <span class="suggestion-icon amber">
+                    <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="m9 9 6 6m0-6-6 6"/></svg>
+                  </span>
+                  <span><strong>Fechar um aplicativo</strong><small>“Feche o Discord”</small></span>
+                  <svg class="arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="message-list" id="message-list"></div>
+          </section>
+
+          <footer class="composer-area">
+            <div class="live-speech-bar" id="live-speech-bar" hidden>
+              <span class="live-speech-pulse" aria-hidden="true"></span>
+              <span class="live-speech-text" id="live-speech-text"></span>
+            </div>
+            <form class="composer" id="command-form">
+              <textarea
+                id="command-input"
+                rows="1"
+                maxlength="320"
+                autocomplete="off"
+                spellcheck="true"
+                placeholder="Peça para abrir, fechar, pesquisar ou controlar uma música..."
+                aria-label="Comando para F.R.I.D.A.Y."
+              ></textarea>
+              <div class="composer-bottom">
+                <div class="local-label" id="local-label">
+                  <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 1 0-16 0"/><path d="M12 8v4l2.5 2"/></svg>
+                  IA leve · neste dispositivo
+                </div>
+                <div class="composer-actions">
+                  <button class="voice-button" id="voice-button" type="button" aria-label="Ativar reconhecimento de voz" title="Ativar “Sexta-feira”">
+                    <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0m-7 7v3m-4 0h8"/></svg>
+                  </button>
+                  <button class="send-button" id="send-button" type="submit" aria-label="Enviar comando" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+            <p class="composer-note">Ative o microfone e diga “Sexta-feira” antes do comando. O áudio é processado somente neste PC.</p>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <dialog class="confirm-dialog" id="confirm-dialog">
+      <form method="dialog">
+        <div class="dialog-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/></svg>
+        </div>
+        <h2>Fechar aplicativo?</h2>
+        <p id="confirm-copy">Esta ação encerrará o aplicativo.</p>
+        <div class="dialog-actions">
+          <button value="cancel" class="secondary-button">Cancelar</button>
+          <button value="confirm" class="danger-button">Sim, fechar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="audio-dialog" id="audio-dialog">
+      <div class="audio-dialog-head">
+        <div>
+          <span class="dialog-kicker">VOZ LOCAL</span>
+          <h2>Configurar microfone</h2>
+        </div>
+        <button class="dialog-close" id="audio-close-button" type="button" aria-label="Fechar configurações">×</button>
+      </div>
+      <div class="audio-dialog-body">
+        <label class="field-label" for="microphone-select">Microfone de entrada</label>
+        <div class="device-row">
+          <select id="microphone-select" aria-label="Escolher microfone">
+            <option value="">Carregando microfones…</option>
+          </select>
+          <button class="icon-button" id="refresh-microphones-button" type="button" title="Atualizar lista" aria-label="Atualizar microfones">
+            <svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.5 12a6.5 6.5 0 0 0-11-4.5L5 10m14 4-2.5 2.5A6.5 6.5 0 0 1 5.5 12"/></svg>
+          </button>
+        </div>
+        <div class="audio-test-card">
+          <div class="audio-test-title">
+            <span>Nível de entrada</span>
+            <span id="audio-device-label">Aguardando teste</span>
+          </div>
+          <div class="audio-meter" aria-label="Nível captado pelo microfone">
+            <span id="audio-meter-fill"></span>
+          </div>
+          <div class="heard-box" id="audio-transcript">Clique em “Usar e testar” e fale normalmente. A transcrição aparecerá aqui mesmo sem dizer “Sexta-feira”.</div>
+        </div>
+        <p class="audio-help">Para os comandos, diga “Sexta-feira” e faça uma pausa curta antes da ação. Exemplo: “Sexta-feira… abra o Spotify”.</p>
+      </div>
+      <div class="audio-dialog-actions">
+        <button class="secondary-button" id="audio-cancel-button" type="button">Fechar</button>
+        <button class="primary-button" id="test-microphone-button" type="button">Usar e testar</button>
+      </div>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  </body>
+</html>

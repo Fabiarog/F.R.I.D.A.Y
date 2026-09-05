@@ -1,10 +1,14 @@
 {
   "name": "friday-core",
-  "version": "4.2.0",
-  "description": "F.R.I.D.A.Y. Neural Command Interface — Desktop App",
+  "version": "5.3.1",
+  "description": "F.R.I.D.A.Y. Local — assistente desktop leve e privado",
   "scripts": {
-    "dev":   "npx @tauri-apps/cli dev",
+    "voice:build": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./voice/build_voice.ps1",
+    "predev": "npm run voice:build",
+    "dev": "npx @tauri-apps/cli dev",
+    "prebuild": "npm run voice:build",
     "build": "npx @tauri-apps/cli build",
+    "test": "node --test tests/*.test.js",
     "tauri": "npx @tauri-apps/cli"
   },
   "devDependencies": {

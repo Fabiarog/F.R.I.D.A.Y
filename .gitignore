@@ -1,0 +1,8 @@
+/node_modules/
+/src-tauri/target/
+/src-tauri/gen/
+/.qa/
+/.voice-venv/
+/voice/.downloads/
+/voice/bin/
+/voice/model/
